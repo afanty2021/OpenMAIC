@@ -1,6 +1,6 @@
 # OpenMAIC - AI 上下文文档
 
-> 最后更新：2026-03-19
+> 最后更新：2026-03-20
 
 ## 项目概述
 
@@ -63,6 +63,8 @@ OpenMAIC 采用两阶段生成流水线：
 - **白板** — AI 智能体在共享白板上实时绘图——逐步推导方程、绘制流程图
   - **历史记录** — 白板操作自动保存，支持撤销/重做
   - **自动保存** — 实时保存白板内容到 IndexedDB
+  - **平移 & 缩放** — 支持鼠标拖拽平移和滚轮缩放
+  - **自动适应** — 一键自动缩放以适应所有内容
 
 ---
 
@@ -88,9 +90,11 @@ OpenMAIC 采用两阶段生成流水线：
 
 - **TTS 提供商** — OpenAI、Azure、GLM、Qwen
 - **浏览器原生 TTS** — 使用 `speechSynthesis` API 进行本地语音播放（无需网络）
+- **服务端 TTS 生成** — 预生成课堂所有语音文件，支持长文本自动分段
 - **ASR 提供商** — OpenAI、Qwen
 - **图片生成** — Seedream、Qwen Image、Nano Banana
 - **视频生成** — Seedance、Kling、Veo
+- **服务端媒体生成** — 课堂生成时自动预生成图片和视频资源
 
 ### 其他核心依赖
 
@@ -130,10 +134,14 @@ OpenMAIC/
 │   ├── action/                 #   动作执行引擎（语音、白板、特效）
 │   ├── ai/                     #   LLM 服务商抽象层
 │   ├── api/                    #   Stage API 门面（幻灯片/画布/场景操作）
+│   ├── server/                 #   服务端功能模块
+│   │   ├── classroom-generation.ts  # 课堂生成核心逻辑
+│   │   └── classroom-media-generation.ts  # 服务端媒体和TTS生成
 │   ├── store/                  #   Zustand 状态管理
 │   │   └── whiteboard-history.ts  # 白板历史状态管理
 │   ├── types/                  #   集中式 TypeScript 类型定义
 │   ├── audio/                  #   TTS & ASR 服务商
+│   │   ├── tts-utils.ts        # TTS 工具函数（长文本分段）
 │   │   ├── browser-tts-preview.ts  # 浏览器原生 TTS 预览
 │   │   └── use-tts-preview.ts      # TTS 预览 Hook
 │   ├── media/                  #   图片 & 视频生成服务商
@@ -212,6 +220,7 @@ OpenMAIC/
 
 - `POST /api/generate-classroom` — 提交异步课堂生成任务
 - `GET /api/generate-classroom/[jobId]` — 轮询生成任务状态
+- `GET /api/classroom-media/[classroomId]/[...path]` — 获取课堂预生成的媒体文件
 
 ### 场景生成
 
@@ -415,3 +424,42 @@ cp -R /path/to/OpenMAIC/skills/openmaic ~/.openclaw/skills/openmaic
 - **论文**: [JCST 2026](https://jcst.ict.ac.cn/en/article/doi/10.1007/s11390-025-6000-0)
 - **Discord 社区**: https://discord.gg/PtZaaTbH
 - **OpenClaw**: https://github.com/openclaw/openclaw
+
+---
+
+## 变更记录
+
+### 2026-03-20 — 同步上游更新 🚀
+
+**合并提交：**
+- `e44a722` — Merge remote-tracking branch 'upstream/main'
+
+**上游新功能（4个提交）：**
+
+1. **服务端媒体和TTS生成** (#75)
+   - 新增 `lib/server/classroom-media-generation.ts` — 服务端媒体生成核心模块
+   - 新增 `lib/audio/tts-utils.ts` — TTS 工具函数，支持长文本自动分段
+   - 新增 `app/api/classroom-media/[classroomId]/[...path]/route.ts` — 媒体文件服务端点
+   - 课堂生成时自动预生成所有图片、视频和TTS音频文件
+
+2. **白板画布增强** (#31)
+   - 新增平移功能 — 鼠标拖拽移动画布
+   - 新增缩放功能 — 鼠标滚轮缩放画布
+   - 新增自动适应功能 — 一键缩放以显示所有内容
+   - 优化 `components/whiteboard/whiteboard-canvas.tsx` (529行增强)
+
+3. **幻灯片内容优化** (#85)
+   - 修复幻灯片文本过于冗长的问题
+   - 防止教师身份信息出现在幻灯片上
+   - 更新提示词模板：`slide-content/system.md`, `slide-actions/system.md`
+
+4. **Tavily 搜索修复** (#119, #122)
+   - 修复 Tavily 查询超出长度限制的问题
+   - 将查询截断至 400 字符限制
+
+**技术改进：**
+- 更新 `lib/generation/outline-generator.ts` — 大纲生成优化
+- 更新 `lib/i18n/stage.ts` — 舞台相关国际化
+- 更新 `lib/orchestration/registry/store.ts` — 编排注册表
+- 更新 `skills/openmaic/` — OpenClaw Skill 文档更新
+  - 新增 `references/provider-keys.md` — 服务商配置指南
