@@ -1,6 +1,6 @@
 # OpenMAIC - AI 上下文文档
 
-> 最后更新：2026-03-20
+> 最后更新：2026-03-21
 
 ## 项目概述
 
@@ -428,6 +428,41 @@ cp -R /path/to/OpenMAIC/skills/openmaic ~/.openclaw/skills/openmaic
 ---
 
 ## 变更记录
+
+### 2026-03-21 — 同步上游更新 🚀
+
+**合并提交：**
+- `7c0c015` — Merge remote-tracking branch 'upstream/main'
+
+**上游新功能（5个提交）：**
+
+1. **浏览器原生 TTS 修复** (#153)
+   - 修复浏览器原生 TTS 播放问题
+   - 新增工具栏 TTS 提供商切换功能
+   - 优化 `components/generation/media-popover.tsx` (143行增强)
+   - 更新 `lib/playback/engine.ts` — 播放引擎 TTS 支持
+
+2. **i18n 国际化补充** (#168)
+   - 添加缺失的 i18n 键：`pdfLoadFailed`, `pdfParseFailed`, `streamNotReadable`
+   - 更新 `lib/i18n/generation.ts`
+
+3. **LaTeX 转换类型安全** (#167)
+   - 修复 `mml2omml()` 返回值类型安全问题
+   - 更新 `lib/export/latex-to-omml.ts`
+
+4. **视频占位符修复** (#117, #123)
+   - 防止视频占位符 src 导致 404 请求
+   - 更新 `components/element/VideoElement/BaseVideoElement.tsx`
+   - 更新 `components/element/VideoElement/index.tsx`
+
+5. **播放速度选项** (#130, #131)
+   - 新增 1.25x 播放速度选项
+   - 更新 `lib/store/settings.ts`
+
+**其他改进：**
+- 更新 `.gitignore` — 添加 `MEMORY` 目录忽略规则
+
+---
 
 ### 2026-03-20 — 同步上游更新 🚀
 
