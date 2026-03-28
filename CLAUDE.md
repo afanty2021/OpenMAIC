@@ -1,6 +1,6 @@
 # OpenMAIC - AI 上下文文档
 
-> 最后更新：2026-03-21
+> 最后更新：2026-03-28
 
 ## 项目概述
 
@@ -428,6 +428,84 @@ cp -R /path/to/OpenMAIC/skills/openmaic ~/.openclaw/skills/openmaic
 ---
 
 ## 变更记录
+
+### 2026-03-28 — 同步上游更新 🚀
+
+**合并提交：**
+- `01a1d6b` — Merge remote-tracking branch 'upstream/main'
+
+**上游新功能（38个提交，v0.1.0 发布）：**
+
+1. **豆包 TTS 2.0 (火山引擎 Seed-TTS 2.0)** (#283)
+   - 新增 Doubao TTS 提供商
+   - 更新 `lib/audio/tts-providers.ts`, `lib/audio/constants.ts`
+
+2. **讨论 TTS 语音** (#211)
+   - 新增 `lib/hooks/use-discussion-tts.ts` — 讨论场景 TTS Hook
+   - 新增 `lib/audio/voice-resolver.ts` — 语音解析器
+   - 每个智能体支持独立语音分配
+
+3. **ElevenLabs TTS 提供商** (#134)
+   - 新增 ElevenLabs TTS 集成
+   - 新增 `public/logos/elevenlabs.svg`
+
+4. **Grok (xAI) 支持** (#113)
+   - 新增 Grok 作为 LLM、图片生成和视频生成服务商
+   - 新增 `lib/media/adapters/grok-image-adapter.ts`, `grok-video-adapter.ts`
+   - 新增 `lib/ai/providers.ts` — 统一提供商抽象层
+   - 新增 `public/logos/grok.svg`
+
+5. **演讲模式增强** (#195, #244)
+   - 全新演讲语音气泡组件 — `components/roundtable/presentation-speech-overlay.tsx`
+   - 新增 `components/roundtable/audio-indicator.tsx` — 音频指示器
+   - 改进输入流程和无障碍支持
+   - 演讲气泡可折叠（暂停时）
+
+6. **讨论暂停/恢复机制** (#129)
+   - 新增 `lib/buffer/stream-buffer.ts` — 缓冲级别暂停
+   - 暂停时冻结文本揭示，不中断 SSE 连接
+
+7. **键盘快捷键** (#256)
+   - 圆桌讨论支持 T/V/Escape/Space 快捷键
+
+8. **Playwright E2E 测试框架** (#229)
+   - 新增 `playwright.config.ts` 和完整 e2e 目录
+   - 覆盖课堂交互、生成流程、首页导航等核心场景
+
+9. **Vitest 单元测试** (#144)
+   - 新增 `vitest.config.ts` 和 tests 目录
+   - 提供商配置、设置同步、设置验证测试
+
+10. **CONTRIBUTING.md** (#190) 和 **CHANGELOG.md**
+    - 标准化贡献工作流文档
+
+**Bug 修复（18个）：**
+- 修复圆桌呼吸条 CSS 动画冻结和按钮点击问题 (#297, #300, #307)
+- 修复演讲气泡底部内边距和折叠问题 (#289)
+- 修复快速暂停/恢复时 TTS 片段重叠 (#286)
+- 修复全屏对话框渲染位置 (#304, #305)
+- 修复输入框打开时 TTS 行为 (#295, #253)
+- 修复服务端同步后清除过期的模型/提供商 ID (#232, #137, #266)
+- 修复预设课堂智能体泄漏问题 (#248)
+- 修复切换课堂时保留预设智能体选择 (#241)
+- 修复聊天路由使用客户端发送 key 的安全问题 (#221)
+- 修复自定义提供商 providerType 转发 (#114)
+- 修复白板 UX 和历史记录 (#235)
+- 修复 undefined action.content 导致的白板文字绘制崩溃 (#193)
+- 修复生成会话失败后的清理 (#194)
+- 修复讨论/QA 请求失败后的 UI 清理 (#128)
+
+**技术改进：**
+- 新增 `lib/store/settings-validation.ts` — 设置验证模块
+- 新增 `lib/store/settings.ts` (249行增强) — 设置持久化和同步
+- 更新 `lib/playback/engine.ts` — 播放引擎改进
+- 更新 `lib/orchestration/registry/store.ts` — 编排注册表增强
+- 更新 `components/agent/agent-bar.tsx` (719行增强) — 智能体栏重构
+- 更新 `components/stage.tsx` (575行增强) — 舞台组件重构
+- 更新 `components/roundtable/index.tsx` (963行增强) — 圆桌讨论大幅重构
+- 更新 `.gitignore` — 添加 Claude Code 目录忽略
+
+---
 
 ### 2026-03-21 — 同步上游更新 🚀
 
