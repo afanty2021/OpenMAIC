@@ -1,6 +1,6 @@
 # OpenMAIC - AI 上下文文档
 
-> 最后更新：2026-03-28
+> 最后更新：2026-04-04
 
 ## 项目概述
 
@@ -385,11 +385,11 @@ cp -R /path/to/OpenMAIC/skills/openmaic ~/.openclaw/skills/openmaic
 
 ### 国际化
 
-支持中文和英文，配置文件位于 `lib/i18n/`：
-- `chat.ts` — 聊天相关
-- `generation.ts` — 生成相关
-- `settings.ts` — 设置相关
-- `stage.ts` — 舞台相关
+使用 **i18next** 框架，支持中文和英文，配置文件位于 `lib/i18n/`：
+- `config.ts` — i18next 配置
+- `locales/zh-CN.json` — 中文翻译
+- `locales/en-US.json` — 英文翻译
+- `TRANSLATION_GUIDE.md` — 翻译指南
 
 ---
 
@@ -422,7 +422,7 @@ cp -R /path/to/OpenMAIC/skills/openmaic ~/.openclaw/skills/openmaic
 - **在线体验**: https://open.maic.chat/
 - **GitHub 仓库**: https://github.com/THU-MAIC/OpenMAIC
 - **论文**: [JCST 2026](https://jcst.ict.ac.cn/en/article/doi/10.1007/s11390-025-6000-0)
-- **Discord 社区**: https://discord.gg/PtZaaTbH
+- **Discord 社区**: https://discord.gg/uJRzqXuC
 - **OpenClaw**: https://github.com/openclaw/openclaw
 
 ---
@@ -576,3 +576,40 @@ cp -R /path/to/OpenMAIC/skills/openmaic ~/.openclaw/skills/openmaic
 - 更新 `lib/orchestration/registry/store.ts` — 编排注册表
 - 更新 `skills/openmaic/` — OpenClaw Skill 文档更新
   - 新增 `references/provider-keys.md` — 服务商配置指南
+
+---
+
+### 2026-04-04 — 同步上游更新 🚀
+
+**合并提交：**
+- `e8fbab1` — Merge remote-tracking branch 'upstream/main'
+
+**上游新功能（4个提交）：**
+
+1. **国际化系统重构 - 迁移到 i18next 框架** (#331)
+   - 从 TypeScript 文件迁移到 i18next + JSON 格式
+   - 新增 `lib/i18n/config.ts` — i18next 配置
+   - 新增 `lib/i18n/locales/zh-CN.json` — 中文翻译（877 行）
+   - 新增 `lib/i18n/locales/en-US.json` — 英文翻译（877 行）
+   - 新增 `lib/i18n/TRANSLATION_GUIDE.md` — 翻译指南
+   - 新增 `lib/hooks/use-i18n.tsx` — i18n Hook
+   - 删除旧的 TypeScript 翻译文件
+   - 更新 `lib/i18n/types.ts`, `lib/i18n/index.ts`, `lib/i18n/locales.ts`
+
+2. **语言切换器组件** (#331)
+   - 新增 `components/language-switcher.tsx` — 语言切换器 UI 组件
+   - 更新 `components/header.tsx` — 集成语言切换器到顶部导航
+
+3. **快捷键冲突修复** (#359)
+   - 防止修饰键组合（Ctrl+X 等）触发单键快捷键
+   - 更新 `lib/playback/engine.ts`
+
+4. **动作过滤逻辑修复** (#163)
+   - 修复动作过滤逻辑并添加安全改进
+   - 更新 `lib/generation/action-parser.ts`, `lib/action/engine.ts`
+
+5. **其他改进**
+   - 更新 Discord 邀请链接（PtZaaTbH → uJRzqXuC）
+   - 更新 `CONTRIBUTING.md`
+   - 多处组件小幅改进（PBL、白板历史、聊天等）
+   - 更新依赖包（新增 i18next 相关）
