@@ -1,6 +1,6 @@
 # OpenMAIC - AI 上下文文档
 
-> 最后更新：2026-04-04
+> 最后更新：2026-04-09
 
 ## 项目概述
 
@@ -88,12 +88,12 @@ OpenMAIC 采用两阶段生成流水线：
 
 ### 语音 & 媒体
 
-- **TTS 提供商** — OpenAI、Azure、GLM、Qwen
+- **TTS 提供商** — OpenAI、Azure、GLM、Qwen、ElevenLabs、豆包 TTS 2.0 (火山引擎 Seed-TTS 2.0)、MiniMax
 - **浏览器原生 TTS** — 使用 `speechSynthesis` API 进行本地语音播放（无需网络）
 - **服务端 TTS 生成** — 预生成课堂所有语音文件，支持长文本自动分段
-- **ASR 提供商** — OpenAI、Qwen
-- **图片生成** — Seedream、Qwen Image、Nano Banana
-- **视频生成** — Seedance、Kling、Veo
+- **ASR 提供商** — OpenAI、Qwen、MiniMax
+- **图片生成** — Seedream、Qwen Image、Nano Banana、Grok、MiniMax
+- **视频生成** — Seedance、Kling、Veo、Grok
 - **服务端媒体生成** — 课堂生成时自动预生成图片和视频资源
 
 ### 其他核心依赖
@@ -288,20 +288,34 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 # Google Gemini（推荐）
 GOOGLE_API_KEY=...
+
+# Grok (xAI)
+GROK_API_KEY=...
+
+# MiniMax
+MINIMAX_API_KEY=...
+MINIMAX_GROUP_ID=...
 ```
 
 其他可选配置：
-- TTS 服务商（OpenAI、Azure、GLM、Qwen）
-- ASR 服务商（OpenAI、Qwen）
-- 图片生成（Seedream、Qwen Image、Nano Banana）
-- 视频生成（Seedance、Kling、Veo）
+- TTS 服务商（OpenAI、Azure、GLM、Qwen、ElevenLabs、豆包、MiniMax）
+- ASR 服务商（OpenAI、Qwen、MiniMax）
+- 图片生成（Seedream、Qwen Image、Nano Banana、Grok、MiniMax）
+- 视频生成（Seedance、Kling、Veo、Grok）
 - PDF 解析（UnPDF、MinerU）
 - 网络搜索（Tavily）
+
+**自托管部署配置：**
+```env
+# 允许访问本地网络（自托管时需要）
+ALLOW_LOCAL_NETWORKS=true
+```
 
 ### 推荐模型
 
 - **Gemini 3 Flash** — 效果与速度的最佳平衡
 - **Gemini 3.1 Pro** — 最高质量（速度较慢）
+- **Grok** — xAI 提供的高性能模型
 
 设置默认模型：
 ```env
@@ -385,10 +399,12 @@ cp -R /path/to/OpenMAIC/skills/openmaic ~/.openclaw/skills/openmaic
 
 ### 国际化
 
-使用 **i18next** 框架，支持中文和英文，配置文件位于 `lib/i18n/`：
+使用 **i18next** 框架，支持多语言，配置文件位于 `lib/i18n/`：
 - `config.ts` — i18next 配置
-- `locales/zh-CN.json` — 中文翻译
+- `locales/zh-CN.json` — 简体中文翻译
 - `locales/en-US.json` — 英文翻译
+- `locales/ja-JP.json` — 日语翻译
+- `locales/ru-RU.json` — 俄语翻译
 - `TRANSLATION_GUIDE.md` — 翻译指南
 
 ---
@@ -428,6 +444,61 @@ cp -R /path/to/OpenMAIC/skills/openmaic ~/.openclaw/skills/openmaic
 ---
 
 ## 变更记录
+
+### 2026-04-09 — 同步上游更新 🚀
+
+**合并提交：**
+- `a99a792` — Merge remote-tracking branch 'upstream/main'
+
+**上游新功能（18个提交）：**
+
+1. **俄语支持** (#261)
+   - 新增俄语 (ru-RU) 语言支持
+   - 界面和 AI 智能体全面支持俄语
+   - 新增 `lib/i18n/locales/ru-RU.json`
+
+2. **日语支持** (#365)
+   - 新增日语 (ja-JP) 语言支持
+   - 新增 `lib/i18n/locales/ja-JP.json`
+
+3. **课程重命名功能** (#58)
+   - 支持重命名已生成的课程
+   - 部分实现 #34 功能请求
+
+4. **Tavily 网络搜索增强** (#258)
+   - PDF 上传时，网络搜索查询支持上下文感知
+   - 自动根据 PDF 内容优化搜索查询
+
+5. **MiniMax 提供商支持** (#182)
+   - 新增 MiniMax 作为 LLM、TTS、ASR 和图片生成服务商
+   - 扩展 MiniMax 提供商功能支持
+
+6. **可配置模型选择** (#108)
+   - TTS 和 ASR 支持可配置模型选择
+   - 统一模型选择到每个提供商
+
+**安全改进：**
+- **SSRF 修复** (#366) — 新增 `ALLOW_LOCAL_NETWORKS` 环境变量用于自托管部署
+- **API 错误日志增强** (#337) — 为所有 API 错误日志添加结构化请求上下文
+- **SECURITY.md** (#281) — 创建安全策略文档
+
+**Bug 修复（9个）：**
+- 修复服务端生成的课堂中智能体配置持久化问题 (#336)
+- 修复 ElevenLabs model_id 问题 (#326)
+- 修复无客户端 API 密钥时的模型级测试连接 (#309)
+- 修复圆桌呼吸条 CSS 动画相关（#307, #300, #297）
+- 修复演讲气泡底部内边距和折叠问题 (#289)
+- 修复快速暂停/恢复时 TTS 片段重叠 (#286)
+- 修复全屏对话框渲染位置 (#304, #305)
+- 修复输入框打开时 TTS 行为 (#295)
+- 修复演讲工具栏居中问题 (#276)
+
+**其他改进：**
+- 移除废弃的 Gemini 3 Pro Preview 模型 (#142)
+- 更新 Discord 邀请链接
+- 扩大 TTS 语音选择按钮 (#273)
+
+---
 
 ### 2026-03-28 — 同步上游更新 🚀
 
