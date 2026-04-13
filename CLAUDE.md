@@ -1,6 +1,6 @@
 # OpenMAIC - AI 上下文文档
 
-> 最后更新：2026-04-09
+> 最后更新：2026-04-13
 
 ## 项目概述
 
@@ -85,13 +85,14 @@ OpenMAIC 采用两阶段生成流水线：
 - **OpenAI API** — GPT 系列模型
 - **Anthropic Claude** — Claude 系列模型
 - **Google Gemini** — Gemini 系列模型（推荐 Gemini 3 Flash）
+- **Ollama** — 本地 LLM 支持（llama3.3、llama3.2、qwen2.5、mistral、gemma3、deepseek-r1、phi4）
 
 ### 语音 & 媒体
 
-- **TTS 提供商** — OpenAI、Azure、GLM、Qwen、ElevenLabs、豆包 TTS 2.0 (火山引擎 Seed-TTS 2.0)、MiniMax
+- **TTS 提供商** — OpenAI、Azure、GLM、Qwen、ElevenLabs、豆包 TTS 2.0 (火山引擎 Seed-TTS 2.0)、MiniMax、自定义 OpenAI 兼容提供商
 - **浏览器原生 TTS** — 使用 `speechSynthesis` API 进行本地语音播放（无需网络）
 - **服务端 TTS 生成** — 预生成课堂所有语音文件，支持长文本自动分段
-- **ASR 提供商** — OpenAI、Qwen、MiniMax
+- **ASR 提供商** — OpenAI、Qwen、MiniMax、自定义 OpenAI 兼容提供商
 - **图片生成** — Seedream、Qwen Image、Nano Banana、Grok、MiniMax
 - **视频生成** — Seedance、Kling、Veo、Grok
 - **服务端媒体生成** — 课堂生成时自动预生成图片和视频资源
@@ -118,14 +119,16 @@ OpenMAIC 采用两阶段生成流水线：
 ```
 OpenMAIC/
 ├── app/                        # Next.js App Router
-│   ├── api/                    #   服务端 API 路由（约 24 个端点）
+│   ├── api/                    #   服务端 API 路由（约 26 个端点）
 │   │   ├── generate/           #     场景生成流水线
 │   │   ├── generate-classroom/ #     异步课堂生成提交与轮询
 │   │   ├── chat/               #     多智能体讨论（SSE 流式传输）
 │   │   ├── pbl/                #     项目制学习端点
+│   │   ├── access-code/        #     访问码认证端点（新增）
 │   │   └── ...                 #     quiz-grade, parse-pdf, web-search 等
 │   ├── classroom/[id]/         #   课堂回放页面
 │   └── page.tsx                #   首页（生成输入）
+├── middleware.ts               #   Next.js 中间件（访问码保护，新增）
 │
 ├── lib/                        # 核心业务逻辑
 │   ├── generation/             #   两阶段课堂生成流水线
@@ -248,6 +251,11 @@ OpenMAIC/
 - `POST /api/verify-video-provider` — 验证视频生成服务商
 - `POST /api/verify-pdf-provider` — 验证 PDF 解析服务商
 
+### 访问码认证（新增）
+
+- `POST /api/access-code/verify` — 验证访问码并设置认证 Cookie
+- `GET /api/access-code/status` — 检查访问码认证状态
+
 ---
 
 ## 开发环境配置
@@ -295,6 +303,9 @@ GROK_API_KEY=...
 # MiniMax
 MINIMAX_API_KEY=...
 MINIMAX_GROUP_ID=...
+
+# Ollama（本地 LLM，无需 API Key）
+OLLAMA_BASE_URL=http://localhost:11434
 ```
 
 其他可选配置：
@@ -309,6 +320,21 @@ MINIMAX_GROUP_ID=...
 ```env
 # 允许访问本地网络（自托管时需要）
 ALLOW_LOCAL_NETWORKS=true
+
+# 站点级访问码认证（可选）
+ACCESS_CODE=your-secret-code
+```
+
+### 推荐模型
+
+- **Gemini 3 Flash** — 效果与速度的最佳平衡
+- **Gemini 3.1 Pro** — 最高质量（速度较慢）
+- **Grok** — xAI 提供的高性能模型
+- **Ollama (本地)** — 完全离线，隐私保护
+
+设置默认模型：
+```env
+DEFAULT_MODEL=google:gemini-3-flash-preview
 ```
 
 ### 推荐模型
@@ -444,6 +470,54 @@ cp -R /path/to/OpenMAIC/skills/openmaic ~/.openclaw/skills/openmaic
 ---
 
 ## 变更记录
+
+### 2026-04-13 — 同步上游更新 🚀
+
+**合并提交：**
+- `7ae2dde` — Merge remote-tracking branch 'upstream/main'
+
+**上游新功能（8个提交）：**
+
+1. **Ollama 本地 LLM 支持** (#94)
+   - 新增 Ollama 作为内置 LLM 提供商（OpenAI 兼容，无需 API Key）
+   - 8 个默认模型：llama3.3、llama3.2、qwen2.5、qwen2.5:32b、mistral、gemma3、deepseek-r1、phi4
+   - 无需密钥的提供商激活机制
+   - 新增 `isProviderKeyRequired()` 辅助函数用于一致的密钥验证
+   - Ollama 的 i18n 字符串（zh-CN + en-US）
+   - 修复客户端可以绕过 API 密钥验证的安全问题
+   - 新增 `public/logos/ollama.svg`
+
+2. **ACCESS_CODE 站点级认证** (#407)
+   - 新增站点级访问码认证功能
+   - 新增 `POST /api/access-code/verify` 端点验证访问码并设置 HttpOnly 7天 Cookie
+   - 新增 `GET /api/access-code/status` 端点检查认证状态
+   - 新增 Next.js 中间件保护 API 路由（ACCESS_CODE 启用时）
+   - 新增 `AccessCodeGuard` 和 `AccessCodeModal` 组件
+   - 新增 4 种语言的 accessCode i18n 翻译（en-US、zh-CN、ja-JP、ru-RU）
+   - 更新 `.env.example` 添加 ACCESS_CODE 文档
+
+3. **自定义 OpenAI 兼容 TTS/ASR 提供商支持** (#357)
+   - 支持配置自定义 OpenAI 兼容的 TTS/ASR 提供商
+   - 扩展 TTS/ASR 提供商配置选项
+
+4. **E2E 生成测试** (#401)
+   - 新增端到端课堂生成测试用例
+   - 覆盖生成流水线完整流程
+
+**安全改进：**
+- **SSRF DNS 解析修复** (#386) — 在 SSRF 验证之前解析 DNS 以防止重绑定绕过
+
+**Bug 修复（3个）：**
+- 修复基于 agentMode 条件设置 generatedAgentConfigs (#353, #354, #373)
+- 修复俄语 i18n 中缺失的 Ollama 和 Doubao 提供商名称 (#389)
+- 更新 Ollama logo 为官方版本 (#400)
+
+**技术改进：**
+- 新增 `middleware.ts` — Next.js 中间件用于访问码保护
+- 新增 `app/api/access-code/` 目录 — 访问码验证 API
+- 更新 `lib/audio/tts-providers.ts`, `lib/audio/asr-providers.ts` — 扩展提供商支持
+
+---
 
 ### 2026-04-09 — 同步上游更新 🚀
 
