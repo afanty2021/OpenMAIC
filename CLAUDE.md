@@ -1,6 +1,6 @@
 # OpenMAIC - AI 上下文文档
 
-> 最后更新：2026-04-13
+> 最后更新：2026-04-15
 
 ## 项目概述
 
@@ -470,6 +470,52 @@ cp -R /path/to/OpenMAIC/skills/openmaic ~/.openclaw/skills/openmaic
 ---
 
 ## 变更记录
+
+### 2026-04-15 — 同步上游更新 v0.1.1 🚀
+
+**合并提交：**
+- `e9c46ea` — Merge remote-tracking branch 'upstream/main'
+
+**上游新功能（5个提交，v0.1.1 发布）：**
+
+1. **课堂导出和导入（ZIP格式）** (#408)
+   - 新增课堂完整导出为ZIP文件功能
+   - 新增课堂ZIP文件导入功能
+   - 包含课堂所有数据：幻灯片、白板、智能体配置等
+   - 新增 `lib/export/classroom-zip.ts` — ZIP导出工具
+   - 新增 `lib/hooks/useExportClassroom.ts` — 导出Hook
+   - 新增 `lib/hooks/useImportClassroom.ts` — 导入Hook
+   - 新增 4 种语言的 i18n 翻译（en-US、zh-CN、ja-JP、ru-RU）
+   - 新增头部下拉菜单"导出课堂ZIP"选项
+   - 新增首页"导入课堂"按钮
+
+2. **内联语言推断** (#412)
+   - 大纲生成时自动推断课程语言
+   - 移除手动语言选择UI
+   - 语言指令（languageDirective）贯穿整个生成流程
+   - PBL场景自动使用推断的语言指令
+   - 50个测试用例，9种场景类型，50/50通过率
+   - 支持外语学习、跨语言PDF、代理请求等场景
+
+3. **Ollama显示优化** (#419)
+   - 未配置时从模型选择器隐藏Ollama
+   - 修复无需密钥的提供商无条件通过过滤的问题
+   - 现在需要用户提供的baseUrl或服务器配置才能显示
+
+4. **自定义提供商baseUrl持久化** (#414)
+   - 修复创建自定义提供商时baseUrl不持久化的问题
+   - 新增 `components/settings/utils.ts` — 设置工具函数
+   - 新设置验证和服务器同步测试
+
+**Bug 修复（2个）：**
+- 修复自定义提供商baseUrl创建后丢失 (#414)
+- 修复未配置时Ollama显示在模型选择器 (#419)
+
+**其他改进：**
+- 更新 CHANGELOG.md — 添加 v0.1.1 变更日志
+- 更新 README.md 和 README-zh.md — 版本号更新
+
+---
 
 ### 2026-04-13 — 同步上游更新 🚀
 
