@@ -4,6 +4,63 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+---
+
+## 本地变更记录
+
+### 2026-04-20 — 同步上游 v0.2.0 🚀
+
+**合并提交：**
+- `3dca7b2` — Merge remote-tracking branch 'upstream/main'
+
+**上游版本：** v0.2.0
+
+**变更规模：**
+- 128 个文件变更
+- +9,711 行新增
+- -1,110 行删除
+
+**主要更新：**
+
+1. **深度交互模式** (#461)
+   - 新增 5 种交互场景类型：代码交互、图表交互、游戏化学习、3D可视化、模拟实验
+   - AI 老师可操作 UI 组件进行教学演示
+   - 全响应式设计，支持桌面、平板和手机
+   - 新增 9 个交互模式素材 GIF/PNG 文件
+
+2. **白板代码元素** (#385)
+   - AI 智能体可在白板上编写、显示和引用可执行代码
+   - 新增 `BaseCodeElement` 组件
+   - 支持语法高亮和代码执行
+
+3. **阿拉伯语支持** (#431)
+   - 新增 `ar-SA` 语言包
+   - 界面和 AI 智能体全面支持阿拉伯语
+
+4. **MinerU 云服务** (#438)
+   - 新增 MinerU Cloud API 作为 PDF 解析提供商
+   - 专用设置 UI 界面
+
+5. **评估框架增强** (#425, #453)
+   - 白板布局质量评估工具
+   - 统一大纲语言评估工具
+   - 新增 6 个评估测试场景
+
+6. **安全增强** (#430)
+   - 新增 X-Frame-Options 和 CSP `frame-ancestors` 头部
+   - 可选的 `ALLOWED_FRAME_ANCESTORS` 环境变量覆盖
+
+7. **其他改进**
+   - 添加最新 OpenAI 模型到默认配置 (#416)
+   - 添加 GLM-5.1 和 GLM-5V-Turbo (#437)
+   - 国际化 baseUrl 快捷方式 (#449)
+   - i18n 键对齐检查 (#447)
+   - 修复课堂 ZIP 导出使用最新名称 (#435)
+   - 修复聚光灯裁剪 (#457)
+   - 更新 README 和素材 (#463)
+
+---
+
 ## [0.2.0] - 2026-04-20
 
 ### Features
