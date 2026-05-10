@@ -4,62 +4,29 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
----
+## [0.2.1] - 2026-04-26
 
-## 本地变更记录
+### Features
 
-### 2026-04-20 — 同步上游 v0.2.0 🚀
+- **[VoxCPM2](https://github.com/OpenBMB/VoxCPM) TTS provider with voice cloning** — OpenMAIC adapts to user-managed VoxCPM backends (vLLM-Omni, Nano-VLLM, official Python API). Clone any voice from a reference audio clip you upload or record in the browser, or let Auto Voice generate a fitting voice from each agent's persona at synthesis time. Voice profiles are stored locally to keep the serverless setup model. The Agent Bar exposes a searchable, previewable voice picker that draws from the global VoxCPM voice pool [#496](https://github.com/THU-MAIC/OpenMAIC/pull/496)
+- **Per-model thinking configuration** — First-class metadata for each model's reasoning capability (effort levels, on/off toggle, adjustable budget, or fixed thinking) flows through chat and all generation paths and is mapped to the right provider-specific request fields (Anthropic `thinking`, OpenAI `reasoning`, etc.). The model selector becomes a unified provider/model/thinking popover with compact search and a much smaller toolbar footprint [#494](https://github.com/THU-MAIC/OpenMAIC/pull/494)
+- **End-of-course completion page with persistent quiz state** — When the outline is fully materialized, students see a course-complete view with quiz score card, scene-type stat cards, and a (motion-respecting) confetti celebration. Quiz answers persist on submit and grading results persist on completion, so navigating away and back restores the reviewing state with AI feedback intact instead of resetting [#484](https://github.com/THU-MAIC/OpenMAIC/pull/484)
+- Add latest released models including [GPT-5.5](https://github.com/THU-MAIC/OpenMAIC/pull/487), DeepSeek-V4 (`-pro`, `-flash`), Xiaomi [MiMo](https://github.com/XiaomiMiMo) (`mimo-v2.5-pro`, `mimo-v2.5`), Tencent [Hy3](https://github.com/Tencent-Hunyuan), and [OpenRouter](https://openrouter.ai/) as a multi-provider gateway [#481](https://github.com/THU-MAIC/OpenMAIC/pull/481) [#487](https://github.com/THU-MAIC/OpenMAIC/pull/487)
+- Add OpenAI image generation (GPT-Image-2) as a media provider [#481](https://github.com/THU-MAIC/OpenMAIC/pull/481)
+- Refresh built-in model registries across Anthropic, DeepSeek, Kimi, Qwen, MiniMax, Grok, OpenAI, GLM, SiliconFlow, and Ollama; persisted local settings now rehydrate in registry order so newly curated lists appear consistent without clearing state [#481](https://github.com/THU-MAIC/OpenMAIC/pull/481)
+- Add inline search for recent classrooms on the home page with deferred filtering by name and description, keyboard-driven open/clear/collapse [#476](https://github.com/THU-MAIC/OpenMAIC/pull/476)
+- Add Deep-Interactive badge on classroom thumbnails for sessions generated with Interactive Mode [#478](https://github.com/THU-MAIC/OpenMAIC/pull/478)
+- Replace always-included media instruction blocks in generation prompts with conditional snippet includes gated on `imageEnabled` / `videoEnabled` — disabled capabilities are removed from the prompt entirely instead of relying on negative-override directives the model often ignored [#490](https://github.com/THU-MAIC/OpenMAIC/pull/490) (by @YizukiAme)
 
-**合并提交：**
-- `3dca7b2` — Merge remote-tracking branch 'upstream/main'
+### Bug Fixes
 
-**上游版本：** v0.2.0
+- Fix language drift between outline and scene generation by unifying the languageDirective across the pipeline so the same target language flows from outline planning through every per-scene call [#474](https://github.com/THU-MAIC/OpenMAIC/pull/474)
 
-**变更规模：**
-- 128 个文件变更
-- +9,711 行新增
-- -1,110 行删除
+### Other Changes
 
-**主要更新：**
-
-1. **深度交互模式** (#461)
-   - 新增 5 种交互场景类型：代码交互、图表交互、游戏化学习、3D可视化、模拟实验
-   - AI 老师可操作 UI 组件进行教学演示
-   - 全响应式设计，支持桌面、平板和手机
-   - 新增 9 个交互模式素材 GIF/PNG 文件
-
-2. **白板代码元素** (#385)
-   - AI 智能体可在白板上编写、显示和引用可执行代码
-   - 新增 `BaseCodeElement` 组件
-   - 支持语法高亮和代码执行
-
-3. **阿拉伯语支持** (#431)
-   - 新增 `ar-SA` 语言包
-   - 界面和 AI 智能体全面支持阿拉伯语
-
-4. **MinerU 云服务** (#438)
-   - 新增 MinerU Cloud API 作为 PDF 解析提供商
-   - 专用设置 UI 界面
-
-5. **评估框架增强** (#425, #453)
-   - 白板布局质量评估工具
-   - 统一大纲语言评估工具
-   - 新增 6 个评估测试场景
-
-6. **安全增强** (#430)
-   - 新增 X-Frame-Options 和 CSP `frame-ancestors` 头部
-   - 可选的 `ALLOWED_FRAME_ANCESTORS` 环境变量覆盖
-
-7. **其他改进**
-   - 添加最新 OpenAI 模型到默认配置 (#416)
-   - 添加 GLM-5.1 和 GLM-5V-Turbo (#437)
-   - 国际化 baseUrl 快捷方式 (#449)
-   - i18n 键对齐检查 (#447)
-   - 修复课堂 ZIP 导出使用最新名称 (#435)
-   - 修复聚光灯裁剪 (#457)
-   - 更新 README 和素材 (#463)
-
----
+- Refactor whiteboard role prompts to file-based markdown templates and add a geometry-conflict detector (overlap, line-through-bbox, canvas clipping) that surfaces problems back to the model. Eval (flash, repeat 3, gemini-3.1-pro scorer) shows overall quality 5.4 → 6.1 and overlap 6.3 → 8.1 from prompt + detector alone [#485](https://github.com/THU-MAIC/OpenMAIC/pull/485)
+- Migrate orchestration prompt builders (`buildStructuredPrompt`, `buildDirectorPrompt`, `buildPBLSystemPrompt`) from inline TS template literals to file-based markdown templates under `lib/prompts/`, sharing the loader infrastructure with the generation pipeline. `prompt-builder.ts` 890 → 314 lines; future content tweaks land as markdown edits [#459](https://github.com/THU-MAIC/OpenMAIC/pull/459)
+>>>>>>> upstream/main
 
 ## [0.2.0] - 2026-04-20
 
