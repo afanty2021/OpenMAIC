@@ -8,7 +8,13 @@
 import { NextRequest } from 'next/server';
 import { callLLM } from '@/lib/ai/llm';
 import { formatSearchResultsAsContext, searchWeb } from '@/lib/web-search';
-import { resolveWebSearchApiKey } from '@/lib/server/provider-config';
+import {
+  isServerConfiguredProvider,
+  isServerProviderDisabled,
+  resolveServerWebSearchProviderId,
+  resolveWebSearchApiKey,
+  resolveWebSearchModel,
+} from '@/lib/server/provider-config';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import {
@@ -16,9 +22,9 @@ import {
   SEARCH_QUERY_REWRITE_EXCERPT_LENGTH,
 } from '@/lib/server/search-query-builder';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
-import type { AICallFn } from '@/lib/generation/pipeline-types';
+import type { AICallFn } from '@openmaic/generation';
 import { WEB_SEARCH_PROVIDERS } from '@/lib/web-search/constants';
-import type { WebSearchProviderId } from '@/lib/web-search/types';
+import type { BaiduSubSources, WebSearchProviderId } from '@/lib/web-search/types';
 import { resolveWebSearchRouteBaseUrl } from '@/lib/server/web-search-config';
 
 const log = createLogger('WebSearch');
@@ -31,14 +37,18 @@ export async function POST(req: NextRequest) {
       query: requestQuery,
       pdfText,
       providerId: requestProviderId,
-      apiKey: clientApiKey,
-      baseUrl: clientBaseUrl,
+      apiKey: bodyApiKey,
+      baseUrl: bodyBaseUrl,
+      baiduSubSources,
+      claudeModelId,
     } = body as {
       query?: string;
       pdfText?: string;
       providerId?: WebSearchProviderId;
       apiKey?: string;
       baseUrl?: string;
+      baiduSubSources?: BaiduSubSources;
+      claudeModelId?: string;
     };
     query = requestQuery;
 
@@ -46,15 +56,52 @@ export async function POST(req: NextRequest) {
       return apiError('MISSING_REQUIRED_FIELD', 400, 'query is required');
     }
 
-    const providerId: WebSearchProviderId =
-      requestProviderId && WEB_SEARCH_PROVIDERS[requestProviderId] ? requestProviderId : 'tavily';
+    const serverProviderId = resolveServerWebSearchProviderId() as WebSearchProviderId | undefined;
+    let providerId: WebSearchProviderId =
+      requestProviderId && WEB_SEARCH_PROVIDERS[requestProviderId]
+        ? requestProviderId
+        : (serverProviderId ?? 'tavily');
+
+    // Prefer the operator's server-configured backend over stale client defaults
+    // (e.g. Tavily without a key, or Brave HTML scrape with empty results).
+    if (
+      serverProviderId &&
+      isServerConfiguredProvider('webSearch', serverProviderId) &&
+      providerId !== serverProviderId &&
+      !isServerConfiguredProvider('webSearch', providerId)
+    ) {
+      log.info(
+        `Using server-configured web search provider "${serverProviderId}" instead of "${providerId}"`,
+      );
+      providerId = serverProviderId;
+    }
+
+    // Enforce server precedence: a force-disabled provider is off for everyone,
+    // regardless of any client key/selection — mirror the TTS contract (#665).
+    // Checked after the server-preference override so a disabled client choice
+    // yields to the operator's enabled backend.
+    if (isServerProviderDisabled('webSearch', providerId)) {
+      return apiError(
+        'PROVIDER_DISABLED',
+        403,
+        'This web search provider is disabled by the server',
+      );
+    }
+
     const provider = WEB_SEARCH_PROVIDERS[providerId];
+    // Managed providers are admin-owned: ignore (don't reject) any client-sent
+    // key/baseUrl. The server config is authoritative, so a stale client base
+    // URL is dropped rather than failing the request.
+    const managed = isServerConfiguredProvider('webSearch', providerId);
+    const clientApiKey = managed ? undefined : bodyApiKey;
+    // SearXNG base URLs are operator-managed only (SEARXNG_BASE_URL); never trust client input.
+    const clientBaseUrl = managed || providerId === 'searxng' ? undefined : bodyBaseUrl;
     const apiKey = resolveWebSearchApiKey(providerId, clientApiKey);
-    if (!apiKey) {
+    if (provider.requiresApiKey && !apiKey) {
       return apiError(
         'MISSING_API_KEY',
         400,
-        `${provider.name} API key is not configured. Set it in Settings → Web Search or configure ${providerId === 'bocha' ? 'BOCHA_API_KEY' : 'TAVILY_API_KEY'} on the server.`,
+        `${provider.name} API key is not configured. Set it in Settings -> Web Search or configure ${getWebSearchEnvKey(providerId)} on the server.`,
       );
     }
     let baseUrl: string | undefined;
@@ -64,13 +111,24 @@ export async function POST(req: NextRequest) {
       const message = error instanceof Error ? error.message : 'Invalid web search base URL';
       return apiError('INVALID_REQUEST', 400, message);
     }
+    if (provider.requiresBaseUrl && !baseUrl) {
+      return apiError(
+        'MISSING_REQUIRED_FIELD',
+        400,
+        getMissingBaseUrlMessage(providerId, provider.name),
+      );
+    }
 
     // Clamp rewrite input at the route boundary; framework body limits still apply to total request size.
     const boundedPdfText = pdfText?.slice(0, SEARCH_QUERY_REWRITE_EXCERPT_LENGTH);
 
     let aiCall: AICallFn | undefined;
     try {
-      const { model: languageModel, thinkingConfig } = await resolveModelFromRequest(req, body);
+      const { model: languageModel, thinkingConfig } = await resolveModelFromRequest(
+        req,
+        body,
+        'web-search-query-rewrite',
+      );
       aiCall = async (systemPrompt, userPrompt) => {
         const result = await callLLM(
           {
@@ -100,7 +158,18 @@ export async function POST(req: NextRequest) {
       finalQueryLength: searchQuery.finalQueryLength,
     });
 
-    const result = await searchWeb({ providerId, query: searchQuery.query, apiKey, baseUrl });
+    const result = await searchWeb({
+      providerId,
+      query: searchQuery.query,
+      apiKey,
+      baseUrl,
+      ...(providerId === 'baidu' && baiduSubSources ? { baiduSubSources } : {}),
+      // A server-pinned model (WEB_SEARCH_CLAUDE_MODELS) is authoritative over
+      // the client-selected one, matching how managed keys/base URLs behave.
+      ...(providerId === 'claude'
+        ? { claudeModelId: resolveWebSearchModel('claude', claudeModelId) }
+        : {}),
+    });
     const context = formatSearchResultsAsContext(result);
 
     return apiSuccess({
@@ -114,5 +183,36 @@ export async function POST(req: NextRequest) {
     log.error(`Web search failed [query="${query?.substring(0, 60) ?? 'unknown'}"]:`, err);
     const message = err instanceof Error ? err.message : 'Web search failed';
     return apiError('INTERNAL_ERROR', 500, message);
+  }
+}
+
+function getMissingBaseUrlMessage(providerId: WebSearchProviderId, providerName: string): string {
+  if (providerId === 'searxng') {
+    return `${providerName} base URL is not configured. Set SEARXNG_BASE_URL on the server.`;
+  }
+  return `${providerName} base URL is not configured. Set ${getWebSearchEnvKey(providerId)} on the server or configure the base URL in Settings -> Web Search.`;
+}
+
+function getWebSearchEnvKey(providerId: WebSearchProviderId): string {
+  switch (providerId) {
+    case 'exa':
+      return 'EXA_API_KEY';
+    case 'baidu':
+      return 'BAIDU_API_KEY';
+    case 'bocha':
+      return 'BOCHA_API_KEY';
+    case 'brave':
+      return 'BRAVE_API_KEY';
+    case 'claude':
+      return 'WEB_SEARCH_CLAUDE_API_KEY';
+    case 'minimax':
+      return 'WEB_SEARCH_MINIMAX_API_KEY';
+    case 'doubao':
+      return 'WEB_SEARCH_DOUBAO_API_KEY';
+    case 'searxng':
+      return 'SEARXNG_BASE_URL';
+    case 'tavily':
+    default:
+      return 'TAVILY_API_KEY';
   }
 }
