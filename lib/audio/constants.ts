@@ -225,6 +225,67 @@ export const TTS_PROVIDERS: Record<BuiltInTTSProviderId, TTSProviderConfig> = {
         gender: 'neutral',
         description: 'voiceVerse',
       },
+      // Fork-local: built-in speakers of the OMLX-served Qwen3-TTS CustomVoice
+      // model (TTS_OPENAI_BASE_URL points at the local OMLX gateway; the model
+      // itself is pinned server-side via TTS_OPENAI_MODELS). These ids are the
+      // speaker names the model accepts; OpenAI cloud would reject them, so
+      // only use this provider against the OMLX endpoint. There is no runtime
+      // guard — every synthesis with these ids fails with a 400 if the
+      // provider is pointed at OpenAI cloud.
+      {
+        id: 'serena',
+        name: 'OMLX Serena',
+        language: 'zh-CN',
+        gender: 'female',
+      },
+      {
+        id: 'vivian',
+        name: 'OMLX Vivian',
+        language: 'zh-CN',
+        gender: 'female',
+      },
+      {
+        id: 'uncle_fu',
+        name: 'OMLX Uncle Fu',
+        language: 'zh-CN',
+        gender: 'male',
+      },
+      {
+        id: 'ryan',
+        name: 'OMLX Ryan',
+        language: 'zh-CN',
+        gender: 'male',
+      },
+      {
+        id: 'aiden',
+        name: 'OMLX Aiden',
+        language: 'en',
+        gender: 'male',
+      },
+      {
+        id: 'eric',
+        name: 'OMLX Eric',
+        language: 'en',
+        gender: 'male',
+      },
+      {
+        id: 'dylan',
+        name: 'OMLX Dylan',
+        language: 'en',
+        gender: 'male',
+      },
+      {
+        id: 'ono_anna',
+        name: 'OMLX Ono Anna',
+        language: 'ja',
+        gender: 'female',
+      },
+      {
+        id: 'sohee',
+        name: 'OMLX Sohee',
+        language: 'ko',
+        gender: 'female',
+      },
     ],
     supportedFormats: ['mp3', 'opus', 'aac', 'flac'],
     speedRange: { min: 0.25, max: 4.0, default: 1.0 },
@@ -1334,7 +1395,9 @@ export const ASR_PROVIDERS: Record<BuiltInASRProviderId, ASRProviderConfig> = {
  * Used when switching providers or testing a non-active provider.
  */
 export const DEFAULT_TTS_VOICES: Record<BuiltInTTSProviderId, string> = {
-  'openai-tts': 'alloy',
+  // Fork-local: default to an OMLX CustomVoice speaker (see the fork-local
+  // voices appended to TTS_PROVIDERS['openai-tts'] above).
+  'openai-tts': 'serena',
   'azure-tts': 'zh-CN-XiaoxiaoNeural',
   'glm-tts': 'tongtong',
   'qwen-tts': 'Cherry',
