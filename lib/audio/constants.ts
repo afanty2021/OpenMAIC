@@ -232,6 +232,15 @@ export const TTS_PROVIDERS: Record<BuiltInTTSProviderId, TTSProviderConfig> = {
       // only use this provider against the OMLX endpoint. There is no runtime
       // guard — every synthesis with these ids fails with a 400 if the
       // provider is pointed at OpenAI cloud.
+      // Speaker ids verified against the served checkpoint's config.json
+      // (talker_config.spk_id): lowercase keys serena, vivian, uncle_fu, ryan,
+      // aiden, ono_anna, sohee, eric, dylan. The checkpoint binds NO language
+      // to any speaker — spk_id × codec_language_id are independent (12 shared
+      // languages, auto-detected from text), so the `language` fields below are
+      // display-affinity metadata only (voice search/filter in the app), not a
+      // functional constraint. DashScope's cloud voice catalog labels (which
+      // mark Dylan/Eric/Ryan/Aiden as zh-CN) belong to a different product and
+      // do not describe this checkpoint.
       {
         id: 'serena',
         name: 'OMLX Serena',
